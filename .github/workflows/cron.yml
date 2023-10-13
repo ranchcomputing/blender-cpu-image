@@ -1,0 +1,79 @@
+name: Auto-update blender
+
+on:
+  schedule:
+    # daily, hour and minute chosen arbitrarily
+    - cron: "32 14 * * *"
+  workflow_dispatch:
+
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # fetch all tags
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
+
+      - name: Check latest blender version from https://api.github.com/repos/blender/blender/
+        id: refs
+        run: |
+          # split lines to fail on exit != 0
+          version="$(go run ./cmd/check-update/main.go)"
+          echo "version=${version}" >> $GITHUB_OUTPUT
+
+      # Login against a Docker registry except on PR
+      # https://github.com/docker/login-action
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: steps.refs.outputs.version != ''
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        if: steps.refs.outputs.version != ''
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.refs.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.refs.outputs.version }}
+          labels: |
+            org.opencontainers.image.licenses=GPL-2.0-or-later
+            org.opencontainers.image.description=Blender CPU image
+
+      # Build and push Docker image with Buildx (don't push on PR)
+      # https://github.com/docker/build-push-action
+      - name: Build and push Docker image
+        if: steps.refs.outputs.version != ''
+        id: build-and-push
+        uses: docker/build-push-action@v5
+        with:
+          build-args: |
+            BLENDER_VERSION=${{ steps.meta.outputs.version }}
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Publish the new tag
+        if: steps.refs.outputs.version != ''
+        run: gh release create $VERSION --notes "Blender $VERSION"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.refs.outputs.version }}
