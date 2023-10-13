@@ -73,7 +73,7 @@ jobs:
 
       - name: Publish the new tag
         if: steps.refs.outputs.version != ''
-        run: gh release create $VERSION --notes "Blender $VERSION"
+        run: gh release create $VERSION --notes "Visit the [packages page](https://github.com/ranchcomputing/blender-cpu-image/pkgs/container/blender-cpu-image) for instructions."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.refs.outputs.version }}
