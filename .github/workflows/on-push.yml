@@ -1,0 +1,29 @@
+name: On push (branch or tag)
+
+on:
+  push:
+    tags: ["v*.*.*"]
+    branches: ["pre/v*.*.*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: refs
+        run: |
+          if [[ "${{github.ref_type}}" == "tag" ]]; then
+            echo "version=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/heads/pre/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and publish container
+        uses: ./.github/workflows/container-publish.yml
+        with:
+          version: ${{ steps.refs.outputs.version }}
+          publish: false
