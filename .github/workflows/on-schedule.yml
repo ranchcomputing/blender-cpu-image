@@ -1,0 +1,48 @@
+name: On schedule
+
+on:
+  schedule:
+    # daily, hour and minute chosen arbitrarily
+    - cron: "32 14 * * *"
+  workflow_dispatch:
+
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # fetch all tags
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "stable"
+
+      - name: Check latest blender version from https://api.github.com/repos/blender/blender/
+        id: refs
+        run: |
+          # split lines to fail on exit != 0
+          version="$(go run ./cmd/check-update/main.go)"
+          echo "version=${version}" >> $GITHUB_OUTPUT
+
+      - name: Build and publish container
+        if: steps.refs.outputs.version != ''
+        uses: ./.github/container-publish
+        with:
+          version: ${{ steps.refs.outputs.version }}
+          publish: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the new tag
+        if: steps.refs.outputs.version != ''
+        run: gh release create $VERSION --notes "Visit the [packages page](https://github.com/ranchcomputing/blender-cpu-image/pkgs/container/blender-cpu-image) for instructions."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.refs.outputs.version }}
