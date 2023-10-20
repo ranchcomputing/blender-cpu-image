@@ -6,6 +6,12 @@ on:
     - cron: "32 14 * * *"
   workflow_dispatch:
 
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,7 +34,7 @@ jobs:
 
       - name: Build and publish container
         if: steps.refs.outputs.version != ''
-        uses: ./.github/workflows/container-publish.yml
+        uses: ./.github/actions/container-publish.yml
         with:
           version: ${{ steps.refs.outputs.version }}
           publish: true
