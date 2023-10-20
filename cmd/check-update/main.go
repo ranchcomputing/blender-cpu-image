@@ -23,17 +23,19 @@ const baseURL = "https://api.github.com/repos/blender/blender/"
 
 func run() error {
 	log.Println("checking:", baseURL)
-	tagName, err := githubLatestTag()
+	tagNames, err := githubLatestTags()
 	if err != nil {
 		return err
 	}
-	log.Println("latest remote tag:", tagName)
 
-	ok, err := tagIsLocal(tagName)
+	tagNames = latestMajorTags(tagNames)
+	log.Println("latest remote tags:", tagNames)
+
+	tagName, err := firstNonLocalTag(tagNames)
 	if err != nil {
 		return err
 	}
-	if ok {
+	if tagName == "" {
 		log.Println("already present locally")
 		return nil
 	}
@@ -42,15 +44,15 @@ func run() error {
 	return nil
 }
 
-func githubLatestTag() (string, error) {
+func githubLatestTags() ([]string, error) {
 	req, err := http.NewRequest("GET", baseURL+"tags", nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	req.Header.Add("Accept", "application/vnd.github.v3+json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
@@ -60,18 +62,61 @@ func githubLatestTag() (string, error) {
 	var gr []githubResponse
 	err = json.NewDecoder(resp.Body).Decode(&gr)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	if len(gr) == 0 {
-		return "", errors.New("got no tags")
-	}
+	tags := make([]string, 0, len(gr))
 	for _, r := range gr {
 		if !strings.HasPrefix(r.Name, "v") {
 			continue
 		}
-		return r.Name, nil
+		tags = append(tags, r.Name)
 	}
-	return "", errors.New("got no usable tag")
+	if len(tags) == 0 {
+		return nil, errors.New("got no usable tag")
+	}
+	return tags, nil
+}
+
+func latestMajorTags(sortedTags []string) []string {
+	seen := make(map[string]bool)
+	tags := make([]string, 0)
+	for _, t := range sortedTags {
+		major := extractMajor(t)
+		if seen[major] {
+			continue
+		}
+		seen[major] = true
+		tags = append(tags, t)
+	}
+	return tags
+}
+
+func extractMajor(tag string) string {
+	major, tail, found := strings.Cut(tag, ".")
+	if !found {
+		panic(fmt.Sprintf("could not find first dot in %s", tag))
+	}
+	minor, _, found := strings.Cut(tail, ".")
+	if !found {
+		panic(fmt.Sprintf("could not find second dot in %s", tag))
+	}
+	return major + "." + minor
+}
+
+func firstNonLocalTag(tagNames []string) (string, error) {
+	for _, tagName := range tagNames {
+		ok, err := tagIsLocal(tagName)
+		if err != nil {
+			return "", err
+		}
+		if ok {
+			continue
+		}
+
+		return tagName, nil
+	}
+	// all tags are local, return an empty string
+	return "", nil
 }
 
 func tagIsLocal(tagName string) (bool, error) {
