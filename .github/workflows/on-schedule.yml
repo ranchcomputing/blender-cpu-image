@@ -38,6 +38,7 @@ jobs:
         with:
           version: ${{ steps.refs.outputs.version }}
           publish: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish the new tag
         if: steps.refs.outputs.version != ''

@@ -7,6 +7,8 @@ inputs:
   publish:
     default: false
     type: boolean
+  github_token:
+    required: true
 
 runs:
   using: "composie"
@@ -19,7 +21,7 @@ runs:
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ inputs.github_token }}
 
     # Extract metadata (tags, labels) for the container
     # https://github.com/docker/metadata-action

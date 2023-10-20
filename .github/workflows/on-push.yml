@@ -33,3 +33,4 @@ jobs:
         with:
           version: ${{ steps.refs.outputs.version }}
           publish: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}
