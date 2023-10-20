@@ -34,7 +34,7 @@ jobs:
 
       - name: Build and publish container
         if: steps.refs.outputs.version != ''
-        uses: ./.github/actions/container-publish.yml
+        uses: ./.github/container-publish
         with:
           version: ${{ steps.refs.outputs.version }}
           publish: true

@@ -26,7 +26,7 @@ jobs:
           fi
 
       - name: Build and publish container
-        uses: ./.github/actions/container-publish.yml
+        uses: ./.github/container-publish
         with:
           version: ${{ steps.refs.outputs.version }}
           publish: false
