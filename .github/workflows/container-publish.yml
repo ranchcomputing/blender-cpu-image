@@ -9,9 +9,6 @@ on:
       publish:
         default: false
         type: boolean
-    secrets:
-      GITHUB_TOKEN:
-        required: true
 
 env:
   # Use docker.io for Docker Hub if empty
