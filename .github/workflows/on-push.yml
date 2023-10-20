@@ -32,5 +32,5 @@ jobs:
         uses: ./.github/container-publish
         with:
           version: ${{ steps.refs.outputs.version }}
-          publish: false
+          publish: ${{ github.ref_type == 'tag' }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
