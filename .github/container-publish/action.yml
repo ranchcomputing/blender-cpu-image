@@ -11,7 +11,7 @@ inputs:
     required: true
 
 runs:
-  using: "composie"
+  using: "composite"
   steps:
     # Login against a container registry
     # https://github.com/docker/login-action
