@@ -16,7 +16,6 @@ env:
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
 
-
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
