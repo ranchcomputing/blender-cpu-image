@@ -1,6 +1,9 @@
 # Blender docker images for CPU rendering
 
-Available versions: https://github.com/ranchcomputing/blender-cpu-image/pkgs/container/blender-cpu-image
+[![GitHub tag (with filter)](https://img.shields.io/github/v/tag/ranchcomputing/blender-cpu-image?logo=docker&label=latest)](https://github.com/ranchcomputing/blender-cpu-image/pkgs/container/blender-cpu-image)
+
+
+For instructions go to the [tagged image versions list](https://github.com/ranchcomputing/blender-cpu-image/pkgs/container/blender-cpu-image).
 
 
 ## Release process
@@ -14,5 +17,7 @@ When ready, [create](https://github.com/ranchcomputing/blender-cpu-image/release
 ---
 
 The Dockerfile was inspired by https://github.com/nytimes/rd-blender-docker
+
+Blender download: https://www.blender.org/download/
 
 Blender releases: https://download.blender.org/release/
